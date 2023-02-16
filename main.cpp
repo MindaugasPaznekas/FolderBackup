@@ -160,14 +160,14 @@ int main(int argc, char** argv)
 
     auto& globaldata = GlobalData::getInstance(argv[1], argv[2]);
 
-    FSHelper fsHelper;
+    LogUtility log;
+
+    FSHelper fsHelper(log.getLogWriter());
 
     if (!fsHelper.initEnvironment())
     {
         return -1;
     }
-
-    LogUtility log;
 
     thread writeToFileThread(&LogUtility::writeToFileThread, &log );
 

@@ -21,6 +21,9 @@ public:
         Update,
         Created
     };
+    LogUtility(const LogUtility&) = delete;
+    LogUtility& operator=(const LogUtility&) = delete;
+    LogUtility& operator==(const LogUtility&) = delete;
 
     LogUtility();
 
@@ -32,11 +35,6 @@ public:
      */
     void searchLog(const std::function<void(const std::string&)>& func) const;
     /**
-     * @brief put a message to queue which will be written to a log file when possible
-     */
-    static void addMessageToLog(const std::string& path, Action action);
-    static void addMessageToLog(const std::string& source, const std::string& destination, Action action);
-    /**
      * @brief loop for writing queued messages to the end of log file
      */
     void writeToFileThread() const;
@@ -44,7 +42,33 @@ public:
      * @brief: call to prepare threads for finishing
      */
     void stopThreads();
+    /**
+     * @brief Class which handles writing to log file
+     */
+    class LogWriter
+    {
+    public:
+        LogWriter(const LogWriter&) = delete;
+        LogWriter& operator=(const LogWriter&) = delete;
+        LogWriter& operator==(const LogWriter&) = delete;
+        LogWriter();
+        ~LogWriter();
+        /**
+         * @brief put a message to queue which will be written to a log file when possible
+         */
+        void addMessageToLog(const std::string& path, Action action);
+        void addMessageToLog(const std::string& source, const std::string& destination, Action action);
+    private:
+        void getTimeString(std::string& string) const;
+        constexpr const std::string& actionToString(Action action);
+        void addMessageToQueue(const std::string& message);
+        const std::string DeleteString;
+        const std::string BackupString;
+        const std::string UpdateString;
+        const std::string CreatedString;
+    };
 
+    LogUtility::LogWriter& getLogWriter();
 private:
     bool readMessageFromQueue(std::string& singleMessage) const;
     bool writeSingleMessageToFile(std::string& singleMessage) const;
@@ -55,19 +79,11 @@ private:
      * @param logFile: reference to input file stream that needs to be read
      */
     void safelyReadLastLineFromFile(std::string& singleMessage, std::ifstream& logFile) const;
-    constexpr static const std::string& actionToString(Action action);
-    static void addMessageToQueue(const std::string& message);
-    static void getTimeString(std::string& string);
 
     std::atomic<bool> m_isThreadStopRequested;
     const std::string LogFileName;
     static std::mutex s_writeQueueMutex;
     static std::mutex s_fileOperationMutex;
-
-    static const std::string s_deleteString;
-    static const std::string s_backupString;
-    static const std::string s_updateString;
-    static const std::string s_createdString;
-
     static std::queue<std::string> s_writeQueue;
+    LogWriter m_logWriter;
 };

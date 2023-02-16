@@ -6,7 +6,7 @@
 class FSHelper
 {
 public: 
-    FSHelper();
+    FSHelper(LogUtility::LogWriter& logWriter);
     ~FSHelper();
     /**
      * @brief checks if file exists
@@ -68,4 +68,5 @@ private:
     void errorCodeHandler(std::string userText, std::error_code errorCode) const;
     uintmax_t getFileSize(const std::filesystem::directory_entry& file) const;
     uintmax_t getFileSize(const std::filesystem::path& file) const;
+    LogUtility::LogWriter& m_logWriter;
 };

@@ -4,7 +4,6 @@
 #include <chrono>
 #include <thread>
 #include <string>
-#include "LogUtility.h"
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -16,7 +15,8 @@ void FSHelper::debugLog(string& logLine) const
 #endif
 }
 
-FSHelper::FSHelper()
+FSHelper::FSHelper(LogUtility::LogWriter& logWriter):
+    m_logWriter(logWriter)
 {
 
 }
@@ -100,7 +100,7 @@ bool FSHelper::checkIfFolderExistsOrCreate(const fs::directory_entry& dir) const
 
     if (waitForDirectoryCreation(dir))
     {
-        LogUtility::addMessageToLog(dir.path().string(), LogUtility::Action::Created);
+        m_logWriter.addMessageToLog(dir.path().string(), LogUtility::Action::Created);
         setPermissions(dir);
     }
 
@@ -276,7 +276,7 @@ void FSHelper::removeFile(const fs::path& fileToRemove, bool logMessage) const
     {
         if (logMessage)
         {
-            LogUtility::addMessageToLog(fileToRemove.string(), LogUtility::Action::Delete);
+            m_logWriter.addMessageToLog(fileToRemove.string(), LogUtility::Action::Delete);
         }
 
         string log = fileToRemove.string() + " - was deleted";
@@ -335,7 +335,7 @@ bool FSHelper::copyFile(const filesystem::path& source,
         }
     }
 
-    LogUtility::addMessageToLog(source.string(), destination.string(), logAction);
+    m_logWriter.addMessageToLog(source.string(), destination.string(), logAction);
 
     string log = destination.string() + " was copied";
     debugLog(log);

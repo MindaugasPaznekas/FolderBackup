@@ -9,17 +9,15 @@
 
 using namespace std;
 namespace fs = std::filesystem;
-const string LogUtility::s_deleteString{" was deleted"};
-const string LogUtility::s_backupString{" was backed up to: "};
-const string LogUtility::s_updateString{ " was updated" };
-const string LogUtility::s_createdString{ " was created" };
+
 queue<string> LogUtility::s_writeQueue{};
 std::mutex LogUtility::s_writeQueueMutex{};
 std::mutex LogUtility::s_fileOperationMutex{};
 
 LogUtility::LogUtility():
     m_isThreadStopRequested(false),
-    LogFileName("FolderBackupLog.txt")
+    LogFileName("FolderBackupLog.txt"),
+    m_logWriter()
 {
 }
 
@@ -132,7 +130,7 @@ bool LogUtility::writeSingleMessageToFile(std::string& singleMessage) const
     return true;
 }
 
-void LogUtility::getTimeString(std::string& string)
+void LogUtility::LogWriter::getTimeString(std::string& string) const
 {
 #ifdef _MSC_VER //version of method for MSVC compiler
     auto now = chrono::floor<chrono::seconds>(chrono::system_clock::now());
@@ -148,8 +146,28 @@ void LogUtility::getTimeString(std::string& string)
 #endif
 }
 
+LogUtility::LogWriter& LogUtility::getLogWriter()
+{
+    return m_logWriter;
+}
 
-void LogUtility::addMessageToLog(const string& path, Action action)
+
+LogUtility::LogWriter::LogWriter():
+    DeleteString(" was deleted"),
+    BackupString{ " was backed up to: " },
+    UpdateString{ " was updated" },
+    CreatedString{ " was created" }
+
+{
+    
+}
+
+LogUtility::LogWriter::~LogWriter()
+{
+    
+}
+
+void LogUtility::LogWriter::addMessageToLog(const string& path, Action action)
 {
     string message;
     getTimeString(message);
@@ -158,7 +176,7 @@ void LogUtility::addMessageToLog(const string& path, Action action)
     addMessageToQueue(message);
 }
 
-void LogUtility::addMessageToLog(const string& source, const string& destination, Action action)
+void LogUtility::LogWriter::addMessageToLog(const string& source, const string& destination, Action action)
 {
     if (action == Action::Update)
     {
@@ -174,24 +192,24 @@ void LogUtility::addMessageToLog(const string& source, const string& destination
     }
 }
 
-constexpr const std::string& LogUtility::actionToString(Action action)
+constexpr const std::string& LogUtility::LogWriter::actionToString(Action action)
 {
     if (action == Action::Delete)
     {
-        return s_deleteString;
+        return DeleteString;
     }
     else if (action == Action::Update)
     {
-        return s_updateString;
+        return UpdateString;
     }
     else if (action == Action::Created)
     {
-        return s_createdString;
+        return CreatedString;
     }
-    return s_backupString;
+    return BackupString;
 }
 
-void LogUtility::addMessageToQueue(const std::string& message)
+void LogUtility::LogWriter::addMessageToQueue(const std::string& message)
 {
     while (true)
     {
