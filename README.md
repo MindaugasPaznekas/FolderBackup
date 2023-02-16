@@ -14,7 +14,7 @@
 
 1. Download or clone the project.
 
-2. Install cmake, add it to Your path. (I used version 3.25)
+2. If YOu do not have it (it is included in VS studio), install cmake, add it to Your path. (I used version 3.25)
 
 3.  Build and Compile.
 
