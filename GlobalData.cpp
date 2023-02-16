@@ -4,14 +4,23 @@ using namespace std;
 namespace fs = filesystem;
 
 unique_ptr<GlobalData> GlobalData::s_instance = nullptr;
-const filesystem::path GlobalData::BackupExtension{".bak"};
+const fs::path GlobalData::BackupExtension{".bak"};
 const string GlobalData::DeletePrefix{"delete_"};
 const size_t GlobalData::DeletePrefixSize{DeletePrefix.size()};
 
-GlobalData::GlobalData() :
+GlobalData::GlobalData(optional<const string> hotFolderPath,
+    optional<const string> backupFolderPath) :
     m_hotFolderDir{},
     m_backupFolderDir{}
 {
+    if (hotFolderPath)
+    {
+        m_hotFolderDir.assign(fs::u8path(hotFolderPath.value()));
+    }
+    if (backupFolderPath)
+    {
+        m_backupFolderDir.assign(fs::u8path(backupFolderPath.value()));
+    }
 }
 
 GlobalData::~GlobalData()
@@ -19,11 +28,11 @@ GlobalData::~GlobalData()
 
 }
 
-GlobalData& GlobalData::getInstance()
+GlobalData& GlobalData::getInstance(optional<const string> hotFolderPath, optional<const string> backupFolderPath)
 {
     if (!s_instance)
     {
-        s_instance = unique_ptr<GlobalData>(new GlobalData());
+        s_instance = unique_ptr<GlobalData>(new GlobalData(hotFolderPath, backupFolderPath));
     }
     return *s_instance.get();
 }
@@ -31,16 +40,6 @@ GlobalData& GlobalData::getInstance()
 void GlobalData::removeInstance()
 {
     s_instance.reset();
-}
-
-void GlobalData::setHotFolderPath(const string& Dir)
-{
-    m_hotFolderDir.assign(fs::u8path(Dir));
-}
-
-void GlobalData::setBackupFolderPath(const string& Dir)
-{
-    m_backupFolderDir.assign(fs::u8path(Dir));
 }
 
 const fs::path& GlobalData::getHotFolderPath() const

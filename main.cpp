@@ -15,21 +15,23 @@ atomic<bool> isThreadStopRequested;
  * @brief loop for file backup thread
  * Crawls through input directory and checks each file
  */
-void runBackupForDirectory()
+void runBackupForDirectory(const FSHelper& fsHelper)
 {
     while (true)
     {
+        GlobalData::getInstance().updatePaths();
+
         for (const auto& fileToBackup : filesystem::recursive_directory_iterator(GlobalData::getInstance().getHotFolderDir()))
         {
-            if (isThreadStopRequested.load() == true)
+            if (isThreadStopRequested.load())
             {
                 return;
             }
 
-            FSHelper::backupSingleFile(fileToBackup);
+            fsHelper.backupSingleFile(fileToBackup);
         }
 
-        if (isThreadStopRequested.load() == true)
+        if (isThreadStopRequested.load())
         {
             return;
         }
@@ -156,12 +158,11 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    auto& globaldata = GlobalData::getInstance();
+    auto& globaldata = GlobalData::getInstance(argv[1], argv[2]);
 
-    globaldata.setHotFolderPath(argv[1]);
-    globaldata.setBackupFolderPath(argv[2]);
+    FSHelper fsHelper;
 
-    if (!FSHelper::initEnvironment())
+    if (!fsHelper.initEnvironment())
     {
         return -1;
     }
@@ -170,7 +171,7 @@ int main(int argc, char** argv)
 
     thread writeToFileThread(&LogUtility::writeToFileThread, &log );
 
-    thread backupFilesThread(&runBackupForDirectory);
+    thread backupFilesThread(&runBackupForDirectory, fsHelper);
 
     handleUI(log);
 

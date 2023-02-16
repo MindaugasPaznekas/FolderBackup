@@ -1,6 +1,5 @@
 #pragma once
 
-#include <filesystem>
 #include <string>
 #include <queue>
 #include <mutex>
@@ -32,12 +31,11 @@ public:
      * @param func: function to execute on log lines
      */
     void searchLog(const std::function<void(const std::string&)>& func) const;
-
-    static void addMessageToLog(const std::filesystem::path& path, Action action);
-    static void addMessageToLog(const std::filesystem::directory_entry& source, Action action);
-    static void addMessageToLog(const std::filesystem::directory_entry& source, const std::filesystem::directory_entry& destination, Action action);
-    static void addMessageToLog(const std::filesystem::path& source, const std::filesystem::directory_entry& destination, Action action);
-    static void addMessageToLog(const std::filesystem::path& source, const std::filesystem::path& destination, Action action);
+    /**
+     * @brief put a message to queue which will be written to a log file when possible
+     */
+    static void addMessageToLog(const std::string& path, Action action);
+    static void addMessageToLog(const std::string& source, const std::string& destination, Action action);
     /**
      * @brief loop for writing queued messages to the end of log file
      */
@@ -46,6 +44,7 @@ public:
      * @brief: call to prepare threads for finishing
      */
     void stopThreads();
+
 private:
     bool readMessageFromQueue(std::string& singleMessage) const;
     bool writeSingleMessageToFile(std::string& singleMessage) const;
@@ -61,7 +60,7 @@ private:
     static void getTimeString(std::string& string);
 
     std::atomic<bool> m_isThreadStopRequested;
-    const std::string m_logFileName;
+    const std::string LogFileName;
     static std::mutex s_writeQueueMutex;
     static std::mutex s_fileOperationMutex;
 

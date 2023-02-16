@@ -1,15 +1,21 @@
 #pragma once
+
 #include <memory>
 #include <filesystem>
+#include <optional>
 
 class GlobalData
 {
 public:
     /**
      * @brief Creates if not already created and returns reference to GlobalData instance
-     * @return reference to GlobalData instance
+     * @note First call initializes it and should provide the required paths
+     * @param hotFolderPath: path to directory which should be updated
+     * @param backupFolderPath: backup directory
+     * @return GlobalData& instance
      */
-    static GlobalData& getInstance();
+    static GlobalData& getInstance(std::optional<const std::string> hotFolderPath = std::nullopt, 
+        std::optional<const std::string> backupFolderPath = std::nullopt);
     /**
      * @brief removes current instance
      */
@@ -20,10 +26,6 @@ public:
     GlobalData& operator==(const GlobalData&) = delete;
 
     ~GlobalData();
-
-    void setHotFolderPath(const std::string& dir);
-
-    void setBackupFolderPath(const std::string& dir);
 
     const std::filesystem::path& getHotFolderPath() const;
 
@@ -40,7 +42,7 @@ public:
         return BackupExtension;
     }
 
-    static constexpr const std::string& getDeletePrefix()
+    constexpr const std::string& getDeletePrefix()
     {
         return DeletePrefix;
     }
@@ -50,9 +52,9 @@ public:
         return DeletePrefixSize;
     }
 protected:
-
+    GlobalData(std::optional<const std::string> hotFolderPath = std::nullopt,
+        std::optional<const std::string> backupFolderPath = std::nullopt);
 private:
-    GlobalData();
     static std::unique_ptr<GlobalData> s_instance;
 
     std::filesystem::directory_entry m_hotFolderDir;

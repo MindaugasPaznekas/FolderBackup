@@ -8,17 +8,25 @@
 
 using namespace std;
 namespace fs = std::filesystem;
-
 //#define DEBUG 1; //uncomment for extended output
-
-void FSHelper::debugLog(string& logLine)
+void FSHelper::debugLog(string& logLine) const
 {
 #ifdef DEBUG
     cout<<logLine<<"\n";
 #endif
 }
 
-bool FSHelper::initEnvironment()
+FSHelper::FSHelper()
+{
+
+}
+
+FSHelper::~FSHelper()
+{
+
+}
+
+bool FSHelper::initEnvironment() const
 {
     const auto& gd = GlobalData::getInstance();
 
@@ -45,19 +53,19 @@ bool FSHelper::initEnvironment()
     return true;
 }
 
-bool FSHelper::checkIfFileExists(const fs::directory_entry& dir)
+bool FSHelper::checkIfFileExists(const fs::directory_entry& dir) const
 {
     GlobalData::getInstance().updatePaths();
     return dir.exists() && dir.is_regular_file();
 }
 
-bool FSHelper::checkIfFolderExists(const fs::directory_entry& dir)
+bool FSHelper::checkIfFolderExists(const fs::directory_entry& dir) const
 {
     GlobalData::getInstance().updatePaths();
     return dir.exists() && dir.is_directory();
 }
 
-bool FSHelper::waitForDirectoryCreation(const fs::directory_entry& dir)
+bool FSHelper::waitForDirectoryCreation(const fs::directory_entry& dir) const
 {
     const unsigned int sleepTimeMs = 10;
     const unsigned int sleepLoopsMax = 1000;
@@ -73,7 +81,7 @@ bool FSHelper::waitForDirectoryCreation(const fs::directory_entry& dir)
     return checkIfFolderExists(dir);
 }
 
-bool FSHelper::checkIfFolderExistsOrCreate(const fs::directory_entry& dir)
+bool FSHelper::checkIfFolderExistsOrCreate(const fs::directory_entry& dir) const
 {
     if (checkIfFolderExists(dir))
     {
@@ -92,14 +100,14 @@ bool FSHelper::checkIfFolderExistsOrCreate(const fs::directory_entry& dir)
 
     if (waitForDirectoryCreation(dir))
     {
-        LogUtility::addMessageToLog(dir, LogUtility::Action::Created);
+        LogUtility::addMessageToLog(dir.path().string(), LogUtility::Action::Created);
         setPermissions(dir);
     }
 
     return checkIfFolderExists(dir);
 }
 
-void FSHelper::setPermissions(const fs::directory_entry& dir)
+void FSHelper::setPermissions(const fs::directory_entry& dir) const
 {
     error_code ec;
 
@@ -108,7 +116,7 @@ void FSHelper::setPermissions(const fs::directory_entry& dir)
     errorCodeHandler(dir.path().string() + " permission were not applied'", ec);
 }
 
-bool FSHelper::doesHotFileNeedToBeDeleted(const fs::directory_entry& fileToBackup)
+bool FSHelper::doesHotFileNeedToBeDeleted(const fs::directory_entry& fileToBackup) const
 {
     if (!fileToBackup.is_regular_file())
     {
@@ -144,7 +152,7 @@ bool FSHelper::doesHotFileNeedToBeDeleted(const fs::directory_entry& fileToBacku
     return cmp == 0;
 }
 
-void FSHelper::deleteBackupFile(string sourceFilename)
+void FSHelper::deleteBackupFile(string sourceFilename) const
 {
     auto& gd = GlobalData::getInstance();
     gd.updatePaths();
@@ -166,7 +174,7 @@ void FSHelper::deleteBackupFile(string sourceFilename)
     removeFile(backUpToDelete);
 }
 
-void FSHelper::backupSingleFile(const fs::directory_entry& fileToBackup)
+void FSHelper::backupSingleFile(const fs::directory_entry& fileToBackup) const
 {
     if (doesHotFileNeedToBeDeleted(fileToBackup))
     {
@@ -204,7 +212,7 @@ void FSHelper::backupSingleFile(const fs::directory_entry& fileToBackup)
 }
 
 bool FSHelper::fileDoesNotExistOrNeedsUpdate(const fs::path& fileToBackup, const fs::directory_entry& destination,
-    LogUtility::Action& logAction)
+    LogUtility::Action& logAction) const
 {
     if (!destination.exists())
     {
@@ -230,7 +238,7 @@ bool FSHelper::fileDoesNotExistOrNeedsUpdate(const fs::path& fileToBackup, const
     return false;
 }
 
-uintmax_t FSHelper::getFileSize(const fs::directory_entry& file)
+uintmax_t FSHelper::getFileSize(const fs::directory_entry& file) const
 {
     error_code ec;
     auto size = file.file_size(ec);
@@ -240,14 +248,14 @@ uintmax_t FSHelper::getFileSize(const fs::directory_entry& file)
     return size;
 }
 
-uintmax_t FSHelper::getFileSize(const fs::path& file)
+uintmax_t FSHelper::getFileSize(const fs::path& file) const
 {
     fs::directory_entry fileDir{file};
 
     return getFileSize(fileDir);
 }
 
-void FSHelper::removeFile(const fs::path& fileToRemove, bool logMessage)
+void FSHelper::removeFile(const fs::path& fileToRemove, bool logMessage) const
 {
     const fs::directory_entry entry{fileToRemove};
     if (!entry.exists())
@@ -268,7 +276,7 @@ void FSHelper::removeFile(const fs::path& fileToRemove, bool logMessage)
     {
         if (logMessage)
         {
-            LogUtility::addMessageToLog(fileToRemove, LogUtility::Action::Delete);
+            LogUtility::addMessageToLog(fileToRemove.string(), LogUtility::Action::Delete);
         }
 
         string log = fileToRemove.string() + " - was deleted";
@@ -277,14 +285,14 @@ void FSHelper::removeFile(const fs::path& fileToRemove, bool logMessage)
 }
 
 
-void FSHelper::updateTimeFromSourceToDestination(const fs::path& source, const fs::path& destination)
+void FSHelper::updateTimeFromSourceToDestination(const fs::path& source, const fs::path& destination) const
 {
     const auto originalTime = getLastWriteTime(source);
 
     updateFileDate(destination, originalTime);
 }
 
-fs::file_time_type FSHelper::getLastWriteTime(const fs::path& path)
+fs::file_time_type FSHelper::getLastWriteTime(const fs::path& path) const
 {
     error_code ec;
 
@@ -295,7 +303,7 @@ fs::file_time_type FSHelper::getLastWriteTime(const fs::path& path)
     return lastWriteTime;
 }
 
-void FSHelper::updateFileDate(const fs::path& pathToFile, const fs::file_time_type& time)
+void FSHelper::updateFileDate(const fs::path& pathToFile, const fs::file_time_type& time) const
 {
     error_code ec;
 
@@ -306,7 +314,7 @@ void FSHelper::updateFileDate(const fs::path& pathToFile, const fs::file_time_ty
 
 
 bool FSHelper::copyFile(const filesystem::path& source, 
-    const filesystem::path& destination, LogUtility::Action& logAction)
+    const filesystem::path& destination, LogUtility::Action& logAction) const
 {
     error_code errorCode;
     fs::copy_options copyOption = fs::copy_options::update_existing;
@@ -327,7 +335,7 @@ bool FSHelper::copyFile(const filesystem::path& source,
         }
     }
 
-    LogUtility::addMessageToLog(source, destination, logAction);
+    LogUtility::addMessageToLog(source.string(), destination.string(), logAction);
 
     string log = destination.string() + " was copied";
     debugLog(log);
@@ -335,7 +343,7 @@ bool FSHelper::copyFile(const filesystem::path& source,
     return true;
 }
 
-void FSHelper::errorCodeHandler(std::string userText, std::error_code errorCode)
+void FSHelper::errorCodeHandler(std::string userText, std::error_code errorCode) const
 {
     if (errorCode)
     {

@@ -1,6 +1,5 @@
 #include "LogUtility.h"
 #include <fstream>
-#include "FSHelper.h"
 #include <chrono>
 #include <thread>
 
@@ -20,7 +19,7 @@ std::mutex LogUtility::s_fileOperationMutex{};
 
 LogUtility::LogUtility():
     m_isThreadStopRequested(false),
-    m_logFileName("FolderBackupLog.txt")
+    LogFileName("FolderBackupLog.txt")
 {
 }
 
@@ -34,11 +33,10 @@ void LogUtility::stopThreads()
     m_isThreadStopRequested.store(true);
 }
 
-
 void LogUtility::searchLog(const std::function<void(const string&)>& func) const
 {
     ifstream logFile;
-    logFile.open(m_logFileName, fstream::in);
+    logFile.open(LogFileName, fstream::in);
 
     string line;
     while (getline(logFile, line))
@@ -68,12 +66,11 @@ void LogUtility::safelyReadLastLineFromFile(string& singleMessage, std::ifstream
     s_fileOperationMutex.unlock();
 }
 
-
 void LogUtility::writeToFileThread() const
 {
     while (true)
     {
-        if (m_isThreadStopRequested.load() == true)
+        if (m_isThreadStopRequested.load())
         {
             return;
         }
@@ -90,6 +87,10 @@ void LogUtility::writeToFileThread() const
         while (!writeSingleMessageToFile(singleMessage))
         {
             this_thread::sleep_for(chrono::milliseconds(1));
+            if (m_isThreadStopRequested.load())
+            {
+                return;
+            }
         }
     }
 }
@@ -123,7 +124,7 @@ bool LogUtility::writeSingleMessageToFile(std::string& singleMessage) const
         return false;
     }
 
-    logFile.open(m_logFileName, fstream::app);
+    logFile.open(LogFileName, fstream::app);
     logFile << singleMessage.c_str() << endl;
     logFile.close();
     s_fileOperationMutex.unlock();
@@ -148,34 +149,16 @@ void LogUtility::getTimeString(std::string& string)
 }
 
 
-void LogUtility::addMessageToLog(const fs::path& path, Action action)
+void LogUtility::addMessageToLog(const string& path, Action action)
 {
     string message;
     getTimeString(message);
-    message += " " + path.string() + actionToString(action);
-    FSHelper::debugLog(message);
+    message += " " + path + actionToString(action);
 
     addMessageToQueue(message);
 }
 
-void LogUtility::addMessageToLog(const fs::directory_entry& source, Action action)
-{
-    addMessageToLog(source.path(), action);
-}
-
-void LogUtility::addMessageToLog(const fs::directory_entry& source, const fs::directory_entry& destination, Action action)
-{
-    addMessageToLog(source.path(), destination.path(), action);
-}
-
-void LogUtility::addMessageToLog(const std::filesystem::path& source, const std::filesystem::directory_entry& destination,
-    Action action)
-{
-    addMessageToLog(source, destination.path(), action);
-}
-
-void LogUtility::addMessageToLog(const std::filesystem::path& source, const std::filesystem::path& destination,
-    Action action)
+void LogUtility::addMessageToLog(const string& source, const string& destination, Action action)
 {
     if (action == Action::Update)
     {
@@ -185,10 +168,8 @@ void LogUtility::addMessageToLog(const std::filesystem::path& source, const std:
     {
         string message;
         getTimeString(message);
-        message += " " + source.string() + actionToString(action) + destination.string();
+        message += " " + source + actionToString(action) + destination;
         
-        FSHelper::debugLog(message);
-
         addMessageToQueue(message);
     }
 }
